@@ -10,5 +10,13 @@
   },
   "observability": {
     "enabled": true
-  }
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "db",
+      "database_id": "1234",
+      "migrations_dir": "drizzle"
+    }
+  ]
 }
