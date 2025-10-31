@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Section, Block, Link } from "@/devlink/_Builtin";
 
 interface DadJokeResult {
@@ -15,11 +15,82 @@ interface DadJokeAPIResponse {
   total_jokes: number;
 }
 
+interface WeatherData {
+  current_weather: {
+    temperature: number;
+    weathercode: number;
+  };
+}
+
 export default function Home() {
   const [inputWord, setInputWord] = useState("");
   const [joke, setJoke] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [weatherLoading, setWeatherLoading] = useState(true);
+
+  // Fetch weather data from our API
+  const fetchWeather = async () => {
+    try {
+      setWeatherLoading(true);
+      const response = await fetch('/app/api/weather');
+      
+      if (!response.ok) {
+        throw new Error(`Weather API error: ${response.status}`);
+      }
+      
+      const weatherData = await response.json() as WeatherData;
+      setWeather(weatherData);
+    } catch (error) {
+      console.error('Failed to fetch weather:', error);
+      // Weather is optional, so we don't show error to user
+    } finally {
+      setWeatherLoading(false);
+    }
+  };
+
+  // Fetch weather on component mount
+  useEffect(() => {
+    fetchWeather();
+  }, []);
+
+  // Get weather icon based on weather code (using emojis as fallback)
+  const getWeatherIcon = (weathercode: number): string => {
+    // Simple emoji mapping for weather codes
+    const emojiMap: { [key: number]: string } = {
+      0: '☀️',   // Clear sky
+      1: '⛅',   // Mainly clear
+      2: '☁️',   // Partly cloudy
+      3: '☁️',   // Overcast
+      45: '🌫️', // Fog
+      48: '🌫️', // Depositing rime fog
+      51: '🌦️', // Light drizzle
+      53: '🌦️', // Moderate drizzle
+      55: '🌦️', // Dense drizzle
+      56: '🌨️', // Light freezing drizzle
+      57: '🌨️', // Dense freezing drizzle
+      61: '🌧️', // Slight rain
+      63: '🌧️', // Moderate rain
+      65: '🌧️', // Heavy rain
+      66: '🌧️', // Light freezing rain
+      67: '🌧️', // Heavy freezing rain
+      71: '❄️',  // Slight snow
+      73: '❄️',  // Moderate snow
+      75: '❄️',  // Heavy snow
+      77: '❄️',  // Snow grains
+      80: '🌦️', // Slight rain showers
+      81: '🌦️', // Moderate rain showers
+      82: '⛈️',  // Violent rain showers
+      85: '🌨️', // Slight snow showers
+      86: '🌨️', // Heavy snow showers
+      95: '⛈️',  // Slight thunderstorm
+      96: '⛈️',  // Thunderstorm with hail
+      99: '⛈️',  // Heavy thunderstorm with hail
+    };
+    
+    return emojiMap[weathercode] || '🌤️'; // Default weather icon
+  };
 
   const fetchDadJoke = async () => {
     if (!inputWord.trim()) {
@@ -104,6 +175,35 @@ export default function Home() {
           <Block tag="p" className="margin-bottom-24px" style={{ fontSize: "1.1rem", color: "#666" }}>
             Enter any word and get a hilarious dad joke related to it!
           </Block>
+
+          {/* Weather Widget */}
+          {weatherLoading ? (
+            <Block tag="div" style={{ marginBottom: "24px", padding: "16px", backgroundColor: "#f9f9f9", borderRadius: "8px" }}>
+              <p style={{ color: "#666", margin: 0 }}>Loading weather...</p>
+            </Block>
+          ) : weather ? (
+            <Block tag="div" style={{ 
+              marginBottom: "24px", 
+              padding: "16px", 
+              backgroundColor: "#f9f9f9", 
+              borderRadius: "8px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "12px"
+            }}>
+              <span style={{ 
+                fontSize: "1.5rem", 
+                fontWeight: "600",
+                color: "#333"
+              }}>
+                {Math.round(weather.current_weather.temperature)}°F
+              </span>
+              <span style={{ fontSize: "1.2rem" }}>
+                {getWeatherIcon(weather.current_weather.weathercode)}
+              </span>
+            </Block>
+          ) : null}
 
           <form onSubmit={handleSubmit} style={{ marginBottom: "24px" }}>
             <div style={{ display: "flex", gap: "10px", justifyContent: "center", flexWrap: "wrap" }}>

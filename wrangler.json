@@ -18,5 +18,11 @@
       "database_id": "1234",
       "migrations_dir": "drizzle"
     }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "WEATHER_CACHE",
+      "id": "1234567890"
+    }
   ]
 }
